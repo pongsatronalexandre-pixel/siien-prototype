@@ -1129,8 +1129,7 @@ if insurance in insurance_logos:
 
             st.image(logo_data[1], width=140)
 
-    else:
-        st.image(str(logo_data), width=200)
+# st.image(str(logo_data), width=200)
 
 
 # Color Function Box
