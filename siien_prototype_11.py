@@ -1117,7 +1117,8 @@ if insurance in insurance_logos:
         col1, col2, spacer = st.columns([1,1,4])
 
         with col1:
-            st.image(logo_data[0], width=140)
+            if logo_data[0]:
+                    st.image(logo_data[0], width=140)
 
         with col2:
 
@@ -1126,8 +1127,8 @@ if insurance in insurance_logos:
                     "<div style='height:35px;'></div>",
                     unsafe_allow_html=True
                 )
-
-            st.image(logo_data[1], width=140)
+            if logo_data[1]:
+                st.image(logo_data[1], width=140)
 
 # st.image(str(logo_data), width=200)
 
