@@ -1106,30 +1106,30 @@ gop_form = gop_forms.get(insurance)
 
 
 if insurance in insurance_logos:
-
     logo_data = insurance_logos[insurance]
 
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
     if isinstance(logo_data, list):
-
-        col1, col2, spacer = st.columns([1,1,4])
+        col1, col2, spacer = st.columns([1, 1, 4])
 
         with col1:
             if logo_data[0]:
-                    st.image(logo_data[0], width=140)
+                st.image(logo_data[0], width=140)
 
         with col2:
-
             if insurance == "Henner VUMI":
                 st.markdown(
                     "<div style='height:35px;'></div>",
                     unsafe_allow_html=True
                 )
-            if logo_data[1]:
+
+            if len(logo_data) > 1 and logo_data[1]:
                 st.image(logo_data[1], width=140)
 
-# st.image(str(logo_data), width=200)
+    else:
+        if logo_data:
+            st.image(str(logo_data), width=200)
 
 
 # Color Function Box
