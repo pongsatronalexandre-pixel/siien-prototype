@@ -698,8 +698,6 @@ note_translations = {
 
 }
 
-
-
 # Note translation function
 def t(key):
     return translations[lang].get(key, key)
@@ -895,6 +893,7 @@ insurance_list = sorted([
     "VHI Global Healthcare",
     "ISON care",
     "Roy Medical Assistance",
+    "BlueCrossBlueShield - Bupa",
 
 
 ], key=str.lower)
@@ -1004,11 +1003,11 @@ insurance_logos = {
     "VHI Global Healthcare": os.path.join(base_path, "vhi_logo.png"),
     "ISON care": os.path.join(base_path, "ison_logo.png"),
     "Roy Medical Assistance": os.path.join(base_path, "roymedical_logo.png"),
-
-
-
-
-
+    "BlueCrossBlueShield - Bupa": [
+         os.path.join(base_path, ""),
+         os.path.join(base_path, "")
+    ],
+       
 }
 
 gop_forms = {
@@ -1130,7 +1129,7 @@ if insurance in insurance_logos:
             if logo_data[1]:
                 st.image(logo_data[1], width=140)
 
-st.image(str(logo_data), width=200)
+# st.image(str(logo_data), width=200)
 
 
 # Color Function Box
