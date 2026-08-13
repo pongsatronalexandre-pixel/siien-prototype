@@ -16,7 +16,7 @@ translations = {
     "ipd": "IPD",
     "company_type": "Company Type",
     "contact": "Contact",
-    "client": "Client (click to expand)",
+    "client": "Client",
     "assistance": "Assistance company",
     "additional": "Additional information",
     "smart_search": "Smart Insurance Search",
@@ -74,7 +74,7 @@ translations = {
      "ipd": "Hospitalisation",
      "company_type": "Type d'entreprise",
      "contact": "Contact",
-     "client": "Client (cliquez pour ourvir)",
+     "client": "Client",
      "assistance": "Société d'assistance",
      "additional": "Informations supplémentaires",
      "smart_search": "Recherche intelligente d'assurannce",
@@ -131,7 +131,7 @@ translations = {
      "ipd": "Stationäre Behandlung",
      "company_type": "Unternehmenstyp",
      "contact": "Kontakt",
-     "client": "Kunde (zum Öffnen klicken)",
+     "client": "Kunde",
      "assistance": "Assistanzunternehmen",
      "additional": "Zusätzliche Informationen",
      "smart_search": "Intelligente Versicherungssuche",
@@ -926,18 +926,18 @@ div[data-testid="stSelectbox"] [data-baseweb="select"]>div {{border-radius:11px!
 .result-cell:first-child {{padding-left:0}} .result-cell:last-child {{border-right:0}}
 .insurance-logo-box {{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;border:1px solid #dfe8e3;border-radius:12px;padding:12px;height:100%;text-align:center;font-size:12px;font-weight:750}}
 .insurance-logo-box img {{max-width:180px;max-height:62px;object-fit:contain;margin:2px 6px}}
-.cell-label {{font-size:13px;font-weight:800;margin-bottom:9px}}
+.cell-label {{font-size:15px;font-weight:800;margin-bottom:9px}}
 .status-pill {{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:8px;font-size:13px;font-weight:800}}
 .status-dot {{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:12px;font-weight:900}}
-.cell-note {{color:#66746d;font-size:11px;line-height:1.4;margin-top:8px}}
+.cell-note {{color:#66746d;font-size:14px;line-height:1.5;margin-top:8px}}
 .result-bottom {{display:grid;grid-template-columns:1fr 1.45fr;gap:0;padding-top:14px}}
 .detail-block {{padding:8px 20px 8px 0}} .detail-block+.detail-block {{border-left:1px solid #e6ede9;padding-left:24px}}
-.detail-title {{color:#17231e;font-size:13px;font-weight:800;margin-bottom:5px}}
-.detail-body {{color:#66746d;font-size:12px;line-height:1.55}}
+.detail-title {{color:#17231e;font-size:15px;font-weight:800;margin-bottom:6px}}
+.detail-body {{color:#66746d;font-size:14px;line-height:1.6}}
 .detail-body a {{color:var(--bnh-green)!important;font-weight:750}}
 details.full-details {{margin-top:12px;border-top:1px solid #e8efeb;padding-top:12px}}
 details.full-details summary {{cursor:pointer;display:inline-block;list-style:none;border:1px solid #cddfd5;border-radius:9px;padding:7px 14px;color:var(--bnh-deep);font-weight:800;font-size:12px}}
-.full-details-grid {{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;color:#64726b;font-size:12px}}
+.full-details-grid {{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;color:#64726b;font-size:14px;line-height:1.6;}}
 .siien-footer-card {{margin:18px 0 0;border:1px solid #dbe9e1;background:linear-gradient(90deg,#f0f9f3,#fbfefc);border-radius:15px;padding:16px 22px;display:grid;grid-template-columns:1.1fr 1.5fr .45fr;align-items:center;gap:20px}}
 .footer-brand {{display:flex;align-items:center;gap:12px;color:var(--bnh-deep)}}
 .footer-brand b {{font-size:18px}} .footer-brand small {{display:block;font-size:9px;color:#607069}}
@@ -1378,13 +1378,34 @@ status_note_display = ui["status_note"]
 opd_note_display = translate_note(opd_note) if opd_note not in [None, "", "--", "-"] else ui["opd_note_short"]
 ipd_note_display = translate_note(ipd_note) if ipd_note not in [None, "", "--", "-"] else ui["ipd_note_short"]
 
+# Prepare GOP link inside Full Details
+gop_link_html = "—"
+
+if gop_form and os.path.exists(gop_form):
+    with open(gop_form, "rb") as file:
+        gop_base64 = base64.b64encode(file.read()).decode()
+
+    gop_filename = os.path.basename(gop_form)
+
+    gop_link_html = f'''
+    <a href="data:application/pdf;base64,{gop_base64}"
+    download="{html.escape(gop_filename)}"
+    style="
+       color:#0b4a34;
+       font-weight:700;
+       text-decoration:none;
+   ">
+   📄 {html.escape(t("gop_sample"))} ↓
+</a>
+'''
+
 st.markdown(textwrap.dedent(f'''<div class="result-box">
     <div class="result-head">
         <h3>&#10003;&nbsp; {html.escape(ui["result_title"])}</h3>
         <div class="result-meta">{flag_img}<b>{country_label}</b><span>•</span><span>{html.escape(str(t("Last updated")))}: {last_updated_label}</span></div>
     </div>
     <div class="result-grid">
-        <div class="result-cell"><div class="insurance-logo-box">{logo_markup}<span>{insurance_label}</span></div></div>
+        <div class="result-cell"><div class="insurance-logo-box">{logo_markup}</div></div>
         {_status_html(t("status"), status, status_color, status_bg, status_note_display)}
         {_status_html(t("opd"), opd_status, opd_color, opd_bg, opd_note_display)}
         {_status_html(t("ipd"), ipd_status, ipd_color, ipd_bg, ipd_note_display)}
@@ -1397,23 +1418,12 @@ st.markdown(textwrap.dedent(f'''<div class="result-box">
         <summary>{html.escape(ui["full_details"])}</summary>
         <div class="full-details-grid">
             <div><b>{html.escape(t("company_type"))}:</b> {html.escape(str(company_type))}</div>
-            <div><b>{html.escape(t("contact"))}:</b> {html.escape(str(result.get("Contact", "—")))}</div>
+            <div><b>{html.escape(t("contact"))}:</b> {result.get("Contact", "—")}</div>
             <div><b>{html.escape(t("client"))}:</b> {html.escape(str(result.get("Client", "—")))}</div>
-            <div><b>GOP:</b> {html.escape(os.path.basename(gop_form) if gop_form else "—")}</div>
+            <div><b>GOP:</b> {gop_link_html}</div>
         </div>
     </details>
 </div>'''), unsafe_allow_html=True)
-
-if gop_form and os.path.exists(gop_form):
-    with open(gop_form, "rb") as file:
-        gop_base64 = base64.b64encode(file.read()).decode()
-    gop_filename = os.path.basename(gop_form)
-    st.markdown(f'''<div style="text-align:center;margin:-4px 0 12px;">
-        <a href="data:application/pdf;base64,{gop_base64}" download="{html.escape(gop_filename)}"
-           style="display:inline-block;padding:8px 14px;border:1px solid #cddfd5;border-radius:9px;color:#0b4a34;font-weight:800;text-decoration:none;background:#fff;font-size:12px;">
-           {html.escape(t("gop_sample"))} &darr;
-        </a>
-    </div>''', unsafe_allow_html=True)
 
 st.info(t("info_msg"))
 st.warning(t("warning_msg"))
