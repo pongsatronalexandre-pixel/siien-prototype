@@ -1197,6 +1197,22 @@ data = {
         "Additional information": "The hospital can accept cases directly from Roy Medical Assistance. However, after completing outpatient treatment, the patient must wait at the cashier until the hospital receives the final Guarantee of Payment (GOP). If you do not wish to wait, please make a deposit or pay upfront and claim reimbursement later. For cases requiring hospitalization or surgery, please coordinate with your insurance provider before coming to the hospital",
     },
 
+    "ANWB Verzekeren": {
+            "Status": "Accepted with conditions",
+            "OPD_status": "Not Accepted",
+            "OPD_note": "Pay & Claim",
+            "IPD_status": "Accepted", 
+            "IPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued before discharge. If you do not wish to wait, please make a deposit or pay and claim reimbursement",
+            "Country": "Netherlands",
+            "Last_updated": "11 May 2026",
+            "Contact": "-",
+            "Client": "IZA Verzekeren",
+            "Assistance company": "APRIL Assistance Thailand",
+            "Company Type": "Assistance company",
+            "Additional information": "The hospital can accept cases directly from ANWB Verzekeren. Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital"
+
+        },
+
     
     
 
