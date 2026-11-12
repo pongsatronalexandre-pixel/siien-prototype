@@ -1478,7 +1478,7 @@ if gop_form and os.path.isfile(gop_form) and gop_form.lower().endswith(".pdf"):
     gop_filename = os.path.basename(gop_form)
     safe_filename = html.escape(gop_filename, quote=True)
     # Preview the PDF pages as images inside the existing result card.
-    # PyMuPDF is optional: the browser PDF preview is used as a fallback.
+    # Requires PyMuPDF in requirements.txt for reliable in-app PDF previews.
     preview_markup = ""
     try:
         import fitz  # PyMuPDF
@@ -1494,11 +1494,14 @@ if gop_form and os.path.isfile(gop_form) and gop_form.lower().endswith(".pdf"):
                     'border:1px solid #e1e8e3;border-radius:5px;" />'
                 )
             preview_markup = "".join(page_images)
-    except (ImportError, Exception):
+    except Exception:
+        # Browser PDF iframes may be blocked; show an actionable fallback instead.
         preview_markup = (
-            f'<iframe src="data:application/pdf;base64,{gop_base64}" '
-            'title="GOP Sample PDF Preview" '
-            'style="width:100%;height:75vh;border:0;background:white;" ></iframe>'
+            '<div style="padding:30px;text-align:center;color:#174d38;'
+            'background:white;border-radius:8px">'
+            '<strong>PDF preview is temporarily unavailable.</strong><p>'
+            'Please use Download PDF below. To enable previews, install '
+            '<code>PyMuPDF</code> in the app environment.</p></div>'
         )
 
     gop_button_markup = f'''<div class="gop-preview-widget">
