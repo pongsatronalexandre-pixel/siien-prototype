@@ -3,10 +3,12 @@ import os
 import textwrap
 import base64
 import html
+import re
 from io import BytesIO
 from urllib.parse import quote
 from streamlit_searchbox import st_searchbox
 from insurance_data import data
+from siien_countries import COUNTRY_CODES, country_flag as make_country_flag
 
 
 # Original Heritage Tree artwork embedded directly so no separate image file is needed.
@@ -70,6 +72,7 @@ translations = {
     "Ireland": "Ireland",
     "Japan": "Japan",
     "Australia": "Australia",
+    "Austria": "Austria",
     "Last updated": "Last updated",
 
 },
@@ -128,6 +131,7 @@ translations = {
      "Ireland": "Irlande",
      "Japan": "Japon",
      "Australia": "Australie",
+     "Austria": "Austrie",
      "Last updated": "Dernière mise à jour",
  },
  "DE": {
@@ -185,6 +189,7 @@ translations = {
      "Ireland": "Irland",
      "Japan": "Japan",
      "Australia": "Australien",
+     "Austria": "Österreich",
      "Last updated": "Zuletzt aktualisiert",
 
 
@@ -701,13 +706,27 @@ note_translations = {
         "DE": "Das Krankenhaus kann Fälle direkt von Roy Medical Assistance übernehmen. Nach Abschluss der ambulanten Behandlung muss der Patient jedoch an der Kasse warten, bis das Krankenhaus die endgültige Kostenübernahmegarantie (Guarantee of Payment – GOP) erhalten hat. Wenn Sie nicht warten möchten, leisten Sie bitte eine Anzahlung oder zahlen Sie zunächst selbst und reichen Sie anschließend eine Erstattung ein. Für Fälle, die einen Krankenhausaufenthalt oder eine Operation erfordern, setzen Sie sich bitte vor Ihrem Besuch im Krankenhaus mit Ihrem Versicherungsanbieter in Verbind"
 
    "The hospital can accept cases directly from ANWB Verzekeren. Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital",
-           "EN": "The hospital can accept cases directly from ANWB Verzekeren. Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital",
-           "FR": "L’hôpital peut accepter les dossiers directement de la part de ANWB Verzekeren. Toutefois, les dossiers peuvent parfois être pris en charge par un prestataire d’assistance local en Thaïlande. Veuillez contacter votre compagnie d’assurance avant de vous rendre à l’hôpital",
-           "DE": "Das Krankenhaus kann Fälle direkt von ANWB Verzekeren übernehmen. Alternativ können Fälle manchmal über einen lokalen Assistance-Dienstleister in Thailand abgewickelt werden. Bitte setzen Sie sich vor Ihrem Besuch im Krankenhaus mit Ihrem Versicherungsanbieter in Verbindun",
+        "EN": "The hospital can accept cases directly from ANWB Verzekeren. Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital",
+        "FR": "L’hôpital peut accepter les dossiers directement de la part de ANWB Verzekeren. Toutefois, les dossiers peuvent parfois être pris en charge par un prestataire d’assistance local en Thaïlande. Veuillez contacter votre compagnie d’assurance avant de vous rendre à l’hôpital",
+        "DE": "Das Krankenhaus kann Fälle direkt von ANWB Verzekeren übernehmen. Alternativ können Fälle manchmal über einen lokalen Assistance-Dienstleister in Thailand abgewickelt werden. Bitte setzen Sie sich vor Ihrem Besuch im Krankenhaus mit Ihrem Versicherungsanbieter in Verbindun",
        
     },
 
+    "The hospital cannot accept cases directly from ING Verzekeren. Please coordinate with your insurance provider before coming to the hospital":{
+        "EN": "The hospital cannot accept cases directly from ING Verzekeren. Please coordinate with your insurance provider before coming to the hospital",
+        "FR": "L’hôpital ne peut pas accepter les dossiers directement de la part de ING Verzekeren. Veuillez contacter votre compagnie d’assurance avant de vous rendre à l’hôpital",
+        "DE": "Das Krankenhaus kann Fälle nicht direkt von ING Verzekeren übernehmen. Bitte setzen Sie sich vor Ihrem Besuch im Krankenhaus mit Ihrem Versicherungsanbieter in Verbindung",
 
+    },
+
+    "The hospital can accept cases directly from TAA (Tyrol Air Ambulance). Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital": {
+        "EN": "The hospital can accept cases directly from TAA (Tyrol Air Ambulance). Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital",
+        "FR": "L’hôpital peut accepter les dossiers directement de la part de TAA (Tyrol Air Ambulance). Toutefois, les dossiers peuvent parfois être pris en charge par un prestataire d’assistance local en Thaïlande. Veuillez contacter votre compagnie d’assurance avant de vous rendre à l’hôpital",
+        "DE": "Das Krankenhaus kann Fälle direkt von TAA (Tyrol Air Ambulance) übernehmen. Alternativ können Fälle manchmal über einen lokalen Assistance-Dienstleister in Thailand abgewickelt werden. Bitte setzen Sie sich vor Ihrem Besuch im Krankenhaus mit Ihrem Versicherungsanbieter in Verbindun",
+               
+    },
+
+    
 }
 
 # Note translation function
@@ -801,7 +820,7 @@ UI_COPY = {
         "hero_text": "Your trusted gateway to international insurance information, providing clear guidance and seamless access to preliminary eligibility insights",
         "trusted": "Trusted", "trusted_sub": "Global Partners", "realtime": "Real-time", "realtime_sub": "Information", "worldwide": "Worldwide", "worldwide_sub": "Coverage",
         "country": "Insurance Country", "search": "Smart Insurance Search",
-        "contact_title": "Can’t find your insurance provider?", "contact_text": "Please contact International Health Insurance Services", "contact_us": "Contact Us",
+        "contact_title": "Need Assistance with Insurance Verification?", "contact_text": "Contact International Health Insurance Services for additional support.", "contact_us": "Contact Insurance Services", "provider_missing": "Provider Not Listed?", "provider_missing_sub": "Can’t find an insurance provider in SIIEN? Contact our team for assistance.", "email_support": "Email Support",
         "result_title": "Insurance Information", "assistance": "Assistance Company", "additional": "Additional Information", "full_details": "View Full Details", "further": "Need further assistance?",
         "status_note": "Eligibility status at BNH Hospital.", "opd_note_short": "Outpatient Department eligibility.", "ipd_note_short": "Inpatient Department eligibility.",
         "footer_text": "SIIEN helps international patients and insurance partners verify insurance eligibility quickly and accurately."
@@ -811,7 +830,7 @@ UI_COPY = {
         "hero_text": "Trouvez les informations d’assurance et vérifiez votre éligibilité auprès de nos partenaires internationaux.",
         "trusted": "Partenaires", "trusted_sub": "de confiance", "realtime": "Information", "realtime_sub": "en temps réel", "worldwide": "Couverture", "worldwide_sub": "internationale",
         "country": "Pays de l’assurance", "search": "Recherche intelligente d’assurance",
-        "contact_title": "Vous ne trouvez pas votre assurance ?", "contact_text": "Veuillez contacter International Health Insurance Services", "contact_us": "Nous contacter",
+        "contact_title": "Besoin d’aide pour vérifier une assurance ?", "contact_text": "Contactez International Health Insurance Services pour obtenir de l’aide.", "contact_us": "Contacter le service assurance", "provider_missing": "Assureur non répertorié ?", "provider_missing_sub": "Vous ne trouvez pas votre assureur dans SIIEN ? Contactez notre équipe.", "email_support": "Assistance par e-mail",
         "result_title": "Informations d’assurance", "assistance": "Société d’assistance", "additional": "Informations supplémentaires", "full_details": "Voir tous les détails", "further": "Besoin d’aide ?",
         "status_note": "Statut d’éligibilité au BNH Hospital.", "opd_note_short": "Éligibilité pour les soins ambulatoires.", "ipd_note_short": "Éligibilité pour l’hospitalisation.",
         "footer_text": "SIIEN aide les patients internationaux et les partenaires d’assurance à vérifier rapidement et précisément l’éligibilité."
@@ -821,7 +840,7 @@ UI_COPY = {
         "hero_text": "Finden Sie Versicherungsinformationen und prüfen Sie Ihre Anspruchsberechtigung bei unseren internationalen Partnern.",
         "trusted": "Vertrauensvolle", "trusted_sub": "Partner", "realtime": "Echtzeit", "realtime_sub": "Informationen", "worldwide": "Weltweite", "worldwide_sub": "Abdeckung",
         "country": "Versicherungsland", "search": "Intelligente Versicherungssuche",
-        "contact_title": "Versicherung nicht gefunden?", "contact_text": "Bitte kontaktieren Sie International Health Insurance Services", "contact_us": "Kontakt",
+        "contact_title": "Hilfe bei der Versicherungsprüfung benötigt?", "contact_text": "Wenden Sie sich für weitere Unterstützung an International Health Insurance Services.", "contact_us": "Versicherungsservice kontaktieren", "provider_missing": "Versicherer nicht aufgeführt?", "provider_missing_sub": "Ist der Versicherer nicht in SIIEN zu finden? Kontaktieren Sie unser Team.", "email_support": "E-Mail-Support",
         "result_title": "Versicherungsinformationen", "assistance": "Assistance-Unternehmen", "additional": "Zusätzliche Informationen", "full_details": "Alle Details anzeigen", "further": "Benötigen Sie weitere Hilfe?",
         "status_note": "Berechtigungsstatus im BNH Hospital.", "opd_note_short": "Berechtigung für ambulante Behandlung.", "ipd_note_short": "Berechtigung für stationäre Behandlung.",
         "footer_text": "SIIEN unterstützt internationale Patienten und Versicherungspartner bei einer schnellen und präzisen Prüfung der Versicherungsberechtigung."
@@ -879,16 +898,28 @@ def _logo_html(logo_data):
 
 def render_contact_panel(compact=False):
     compact_class = " compact" if compact else ""
-    title = ui["further"] if compact else ui["contact_title"]
+    subject = quote("SIIEN - Provider Not Listed")
+    email_link = f"mailto:insurance@bnh.co.th?subject={subject}"
     st.markdown(
         f'''<div class="siien-contact{compact_class}">
-            <div class="contact-icon">&#9742;</div>
-            <div class="contact-copy">
-                <div class="contact-title">{html.escape(title)}</div>
-                <div class="contact-sub">{html.escape(ui["contact_text"])}</div>
-                <a href="mailto:insurance@bnh.co.th">insurance@bnh.co.th</a>
+            <div class="contact-header">
+                <div class="contact-icon">&#9742;</div>
+                <div class="contact-copy">
+                    <div class="contact-title">{html.escape(ui["contact_title"])}</div>
+                    <div class="contact-sub">{html.escape(ui["contact_text"])}</div>
+                </div>
             </div>
-            <a class="contact-button" href="mailto:insurance@bnh.co.th">{html.escape(ui["contact_us"])} <span>&rsaquo;</span></a>
+            <div class="contact-options">
+                <a class="contact-option" href="{email_link}">
+                    <span class="contact-option-icon">&#9993;</span>
+                    <span><strong>{html.escape(ui["email_support"])}</strong><small>insurance@bnh.co.th</small></span>
+                </a>
+                <a class="contact-option" href="{email_link}">
+                    <span class="contact-option-icon">&#8981;</span>
+                    <span><strong>{html.escape(ui["provider_missing"])}</strong><small>{html.escape(ui["provider_missing_sub"])}</small></span>
+                </a>
+            </div>
+            <a class="contact-button" href="{email_link}">&#9993; &nbsp;{html.escape(ui["contact_us"])}</a>
         </div>''',
         unsafe_allow_html=True,
     )
@@ -948,18 +979,28 @@ st.markdown(f'''<style>
 .st-key-search_card label {{color:#12251c!important;font-size:14px!important;font-weight:750!important}}
 div[data-testid="stSelectbox"] [data-baseweb="select"]>div {{border-radius:11px!important;border-color:#d8e3dd!important;min-height:50px}}
 .st-key-search_card input {{border-radius:11px!important}}
-.siien-contact {{display:grid;grid-template-columns:54px 1fr auto;gap:16px;align-items:center;margin-top:18px;padding:14px 18px;border:1px solid #dcebe2;border-radius:13px;background:linear-gradient(90deg,#f5faf7,#fbfefc)}}
-.contact-icon {{width:48px;height:48px;border-radius:50%;background:var(--bnh-deep);color:#fff;display:grid;place-items:center;font-size:23px}}
-.contact-title {{font-weight:800;font-size:14px;color:#17231e}}
-.contact-sub {{color:#68766f;font-size:12px;margin-top:2px}}
-.contact-copy a {{color:var(--bnh-green);font-size:12px;font-weight:800;text-decoration:none}}
-.contact-button {{border:1.5px solid var(--bnh-green);color:var(--bnh-deep)!important;border-radius:10px;padding:10px 17px;font-weight:800;font-size:13px;text-decoration:none!important;white-space:nowrap;background:#fff}}
+.siien-contact {{display:flex;flex-direction:column;gap:14px;margin-top:18px;padding:20px 22px;border:1px solid #dcebe2;border-radius:15px;background:linear-gradient(90deg,#f5faf7,#fbfefc)}}
+.contact-header {{display:flex;align-items:center;gap:15px}}
+.contact-icon {{flex:0 0 48px;width:48px;height:48px;border-radius:13px;background:#e2f2e9;color:var(--bnh-deep);display:grid;place-items:center;font-size:23px}}
+.contact-title {{font-weight:850;font-size:15px;color:#17231e}}
+.contact-sub {{color:#68766f;font-size:12px;margin-top:4px}}
+.contact-options {{display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid #dcebe2;padding-top:14px}}
+.contact-option {{display:flex;align-items:flex-start;gap:10px;text-decoration:none!important;padding:8px 10px;border-radius:10px;color:#17392c!important}}
+.contact-option:hover {{background:#eaf6ee}}
+.contact-option-icon {{color:var(--bnh-green);font-size:21px;line-height:1.1}}
+.contact-option strong {{display:block;font-size:13px;font-weight:800}}
+.contact-option small {{display:block;color:#68766f;font-size:11px;margin-top:4px;line-height:1.5}}
+.contact-button {{display:block;align-self:stretch;text-align:center;border:1.5px solid var(--bnh-green);color:var(--bnh-deep)!important;border-radius:10px;padding:11px 17px;font-weight:800;font-size:13px;text-decoration:none!important;background:#fff}}
+.contact-button:hover {{background:#eaf6ee}}
 .siien-contact.compact {{margin:12px 0 16px}}
 .result-box {{background:#fff;border:1px solid #e3ece7;border-radius:22px;padding:24px 28px;box-shadow:var(--shadow);margin:0 0 18px}}
 .result-head {{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:15px;border-bottom:1px solid #e6eee9}}
 .result-head h3 {{margin:0;color:var(--bnh-deep);font-size:21px}}
-.result-meta {{color:#65736c;font-size:13px;display:flex;align-items:center;gap:8px;white-space:nowrap}}
-.result-meta img {{width:24px;height:auto}}
+.result-meta {{display:flex;align-items:center;gap:11px;flex-wrap:nowrap}}
+.result-meta .country-text {{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}}
+.result-meta .country-name {{color:#183c2e;font-size:16px;font-weight:900;line-height:1.25;letter-spacing:.1px}}
+.result-meta .country-updated {{color:#45574f;font-size:12px;font-weight:800;line-height:1.35}}
+.result-meta img {{width:32px;height:22px;object-fit:cover;flex-shrink:0}}
 .result-grid {{display:grid;grid-template-columns:1.22fr .92fr .92fr .92fr;gap:0;padding:14px 0;border-bottom:1px solid #e9efeb}}
 .result-cell {{padding:8px 18px;border-right:1px solid #e5ece8;min-height:110px}}
 .result-cell:first-child {{padding-left:0}} .result-cell:last-child {{border-right:0}}
@@ -976,7 +1017,13 @@ div[data-testid="stSelectbox"] [data-baseweb="select"]>div {{border-radius:11px!
 .detail-body a {{color:var(--bnh-green)!important;font-weight:750}}
 details.full-details {{margin-top:12px;border-top:1px solid #e8efeb;padding-top:12px}}
 details.full-details summary {{cursor:pointer;display:inline-block;list-style:none;border:1px solid #cddfd5;border-radius:9px;padding:7px 14px;color:var(--bnh-deep);font-weight:800;font-size:12px}}
-.full-details-grid {{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;color:#64726b;font-size:12px}}
+.full-details-grid {{margin-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.siien-detail-item {{background:#f7fbf8;border:1px solid #dfece3;border-radius:12px;padding:15px 17px;min-width:0}}
+.siien-detail-label {{color:#47715b;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}}
+.siien-detail-value {{color:#173c2b;font-size:14px;font-weight:750;line-height:1.6;overflow-wrap:anywhere}}
+.siien-detail-value a {{color:#087448!important;font-weight:800;text-decoration:underline;text-underline-offset:3px}}
+.siien-detail-gop {{display:flex;align-items:center;min-height:100%}}
+@media(max-width:650px) {{.full-details-grid {{grid-template-columns:1fr}}}}
 .siien-footer-card {{margin:18px 0 0;border:1px solid #dbe9e1;background:linear-gradient(90deg,#f0f9f3,#fbfefc);border-radius:15px;padding:16px 22px;display:grid;grid-template-columns:1.1fr 1.5fr .45fr;align-items:center;gap:20px}}
 .footer-brand {{display:flex;align-items:center;gap:12px;color:var(--bnh-deep)}}
 .footer-brand b {{font-size:18px}} .footer-brand small {{display:block;font-size:9px;color:#607069}}
@@ -984,7 +1031,7 @@ details.full-details summary {{cursor:pointer;display:inline-block;list-style:no
 .footer-message {{color:#485850;font-size:12px;line-height:1.5}}
 .footer-bnh {{color:var(--bnh-deep);font-size:20px;font-weight:900;text-align:right}} .footer-bnh small {{color:#ef6500;font-size:9px;letter-spacing:1px}}
 .siien-footer-bar {{margin-top:0;padding:15px 22px;background:linear-gradient(90deg,#075237,#00653e);color:#fff;display:flex;justify-content:space-between;gap:16px;font-size:10px;border-radius:0 0 14px 14px}}
-@media(max-width:850px) {{.block-container{{padding-left:1rem!important;padding-right:1rem!important}}.hero-grid{{grid-template-columns:1fr}}.hero-art{{min-height:220px}}.siien-hero{{padding:32px 22px 42px}}.result-grid{{grid-template-columns:1fr 1fr}}.result-cell{{border-bottom:1px solid #e5ece8}}.result-bottom{{grid-template-columns:1fr}}.detail-block+.detail-block{{border-left:0;padding-left:0}}.siien-contact{{grid-template-columns:48px 1fr}}.contact-button{{grid-column:1/-1;text-align:center}}.siien-footer-card{{grid-template-columns:1fr}}.footer-bnh{{text-align:left}}.siien-footer-bar{{flex-direction:column}}}}
+@media(max-width:850px) {{.block-container{{padding-left:1rem!important;padding-right:1rem!important}}.hero-grid{{grid-template-columns:1fr}}.hero-art{{min-height:220px}}.siien-hero{{padding:32px 22px 42px}}.result-grid{{grid-template-columns:1fr 1fr}}.result-cell{{border-bottom:1px solid #e5ece8}}.result-bottom{{grid-template-columns:1fr}}.detail-block+.detail-block{{border-left:0;padding-left:0}}.contact-options{{grid-template-columns:1fr}}.siien-footer-card{{grid-template-columns:1fr}}.footer-bnh{{text-align:left}}.siien-footer-bar{{flex-direction:column}}}}
 </style>''', unsafe_allow_html=True)
 
 header_left,en_col,fr_col,de_col = st.columns([6.2,1.15,1.15,1.15], vertical_alignment="center")
@@ -1082,6 +1129,8 @@ insurance_list = sorted([
     "Roy Medical Assistance",
     "BlueCrossBlueShield - Bupa",
     "ANWB Verzekeren",
+    "ING Verzekeren",
+    "TAA (Tyrol Air Ambulance)"
 
 
 ], key=str.lower)
@@ -1196,6 +1245,8 @@ insurance_logos = {
          os.path.join(base_path, "")
     ],
     "ANWB Verzekeren": os.path.join(base_path, "anwb_logo.png"),
+    "ING Verzekeren": os.path.join(base_path, "ing_logo.png" ),
+    "TAA (Tyrol Air Ambulance)": os.path.join(base_path, "taa_logo.png"),
        
 }
 
@@ -1229,10 +1280,13 @@ if jump_to in data:
     st.query_params.clear()
 
 initial_insurance = st.session_state.get("selected_insurance", None)
-country_options = ["All Countries"] + sorted (set(
-    info.get("Country") for info in data.values()
-    if info.get("Country") not in [None, "-", ""]
-))
+# All countries and territories remain selectable even with no insurer records.
+country_options = ["All Countries"] + sorted(
+    set(COUNTRY_CODES) | {
+        info.get("Country") for info in data.values()
+        if isinstance(info.get("Country"), str) and info.get("Country") not in ["-", ""]
+    }, key=str.casefold
+)
 
 with st.container(key="search_card"):
     left_search, right_search = st.columns(2, gap="large")
@@ -1244,6 +1298,11 @@ with st.container(key="search_card"):
         name: info for name, info in data.items() if info.get("Country") == selected_country
     }
     insurance_list = sorted(filtered_data.keys())
+    if not insurance_list:
+        st.caption({"FR": "Aucun assureur enregistré pour ce pays.",
+                    "DE": "Für dieses Land sind noch keine Versicherer erfasst.",
+                    "NL": "Er zijn nog geen verzekeraars geregistreerd voor dit land."}.get(lang,
+                    "No insurance providers registered for this country yet."))
     if current_insurance not in filtered_data:
         st.session_state.selected_insurance = None
 
@@ -1292,47 +1351,8 @@ def get_status_style(status):
         return "#616161", "#f5f5f5"
     
 def get_country_flag(country):
-    flags = {
-        "Australia": "au.png",
-        "Thailand": "th.png",
-        "China": "cn.png",
-        "France": "fr.png",
-        "Germany": "de.png",
-        "Belgium": "be.png",
-        "Luxembourg": "lu.png",
-        "Netherlands": "nl.png",
-        "Poland": "pl.png",
-        "Slovenia": "si.png",
-        "Portugal": "pt.png",
-        "Spain": "es.png",
-        "Sweden": "se.png",
-        "Norway": "no.png",
-        "Denmark": "dk.png",
-        "Finland": "fi.png",
-        "Switzerland": "ch.png",
-        "Ireland": "ie.png",
-        "United Kingdom": "gb.png",
-        "United States of America": "us.png",
-        "Vietnam": "vn.png",
-        "Indonesia": "id.png",
-        "India": "in.png",
-        "Japan": "jp.png",
-    }
-
-    flag_file = flags.get(country, "world.png")
-
-    flag_path = os.path.join(
-        os.path.dirname(__file__),
-        "assets",
-        "flags",
-        flag_file
-    )
-
-    try:
-        with open(flag_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode()
-    except FileNotFoundError:
-        return ""
+    # Offline, automatic flags: no assets/flags PNG files needed.
+    return make_country_flag(country)
 
 # Result
 
@@ -1414,11 +1434,41 @@ logo_markup = _logo_html(logo_data)
 insurance_label = html.escape(str(insurance))
 country_label = html.escape(str(t(country)))
 last_updated_label = html.escape(str(translate_date(last_updated)))
-flag_img = f'<img src="data:image/png;base64,{country_flag}" alt="{country_label}">' if country_flag else ""
+# Flag images with a consistent rectangular design (works on Windows browsers).
+# Images are delivered by FlagCDN; country names and insurance data remain local.
+_country_code = COUNTRY_CODES.get(country, "").lower()
+if _country_code and len(_country_code) == 2 and _country_code.isalpha():
+    flag_img = (
+        f'<img src="https://flagcdn.com/w80/{_country_code}.png" '
+        f'alt="Flag of {html.escape(str(country), quote=True)}" '
+        f'style="width:32px;height:22px;object-fit:cover;vertical-align:middle;'
+        f'border-radius:4px;border:1px solid rgba(0,0,0,.10);'
+        f'box-shadow:0 1px 3px rgba(0,0,0,.10);flex-shrink:0" />'
+    )
+else:
+    flag_img = '<span aria-hidden="true" style="font-size:22px">🌐</span>'
+
 
 status_note_display = ui["status_note"]
 opd_note_display = translate_note(opd_note) if opd_note not in [None, "", "--", "-"] else ui["opd_note_short"]
 ipd_note_display = translate_note(ipd_note) if ipd_note not in [None, "", "--", "-"] else ui["ipd_note_short"]
+
+# Present contact data safely as clickable email links, including legacy <a href="mailto:..."> entries.
+def _contact_display(raw):
+    raw = str(raw or "—")
+    emails = re.findall(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", html.unescape(raw))
+    emails = list(dict.fromkeys(emails))
+    if emails:
+        return ", ".join(
+            f'<a href="mailto:{html.escape(address, quote=True)}">{html.escape(address)}</a>'
+            for address in emails
+        )
+    # Do not render arbitrary HTML supplied in insurer records.
+    return html.escape(re.sub(r"<[^>]*>", "", raw).strip() or "—")
+
+contact_display = _contact_display(result.get("Contact", "—"))
+client_display = html.escape(str(result.get("Client", "—")))
+company_type_display = html.escape(str(company_type))
 
 gop_button_markup = ""
 if gop_form and os.path.isfile(gop_form) and gop_form.lower().endswith(".pdf"):
@@ -1492,7 +1542,7 @@ st.markdown("""<style>
 st.markdown('\n'.join(line.lstrip() for line in textwrap.dedent(f'''<div class="result-box">
     <div class="result-head">
         <h3>&#10003;&nbsp; {html.escape(ui["result_title"])}</h3>
-        <div class="result-meta">{flag_img}<b>{country_label}</b><span>•</span><span>{html.escape(str(t("Last updated")))}: {last_updated_label}</span></div>
+        <div class="result-meta">{flag_img}<div class="country-text"><div class="country-name">{country_label}</div><div class="country-updated">{html.escape(str(t("Last updated")))}: {last_updated_label}</div></div></div>
     </div>
     <div class="result-grid">
         <div class="result-cell"><div class="insurance-logo-box">{logo_markup}</div></div>
@@ -1507,10 +1557,10 @@ st.markdown('\n'.join(line.lstrip() for line in textwrap.dedent(f'''<div class="
     <details class="full-details">
         <summary>{html.escape(ui["full_details"])}</summary>
         <div class="full-details-grid">
-            <div><b>{html.escape(t("company_type"))}:</b> {html.escape(str(company_type))}</div>
-            <div><b>{html.escape(t("contact"))}:</b> {html.escape(str(result.get("Contact", "—")))}</div>
-            <div><b>{html.escape(t("client"))}:</b> {html.escape(str(result.get("Client", "—")))}</div>
-            <div>{gop_button_markup}</div>
+            <div class="siien-detail-item"><div class="siien-detail-label">{html.escape(t("company_type"))}</div><div class="siien-detail-value">{company_type_display}</div></div>
+            <div class="siien-detail-item"><div class="siien-detail-label">{html.escape(t("contact"))}</div><div class="siien-detail-value">{contact_display}</div></div>
+            <div class="siien-detail-item"><div class="siien-detail-label">{html.escape(t("client"))}</div><div class="siien-detail-value">{client_display}</div></div>
+            <div class="siien-detail-item siien-detail-gop">{gop_button_markup}</div>
         </div>
     </details>
 </div>''').splitlines() if line.strip()), unsafe_allow_html=True)
