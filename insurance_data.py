@@ -1198,27 +1198,54 @@ data = {
     },
 
     "ANWB Verzekeren": {
+        "Status": "Accepted with conditions",
+        "OPD_status": "Not Accepted",
+        "OPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued",
+        "IPD_status": "Accepted", 
+        "IPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued before discharge. If you do not wish to wait, please make a deposit or pay and claim reimbursement",
+        "Country": "Netherlands",
+        "Last_updated": "11 May 2026",
+        "Contact": "-",
+        "Client": "IZA Verzekeren",
+        "Assistance company": "APRIL Assistance Thailand",
+        "Company Type": "Assistance company",
+        "Additional information": "The hospital can accept cases directly from ANWB Verzekeren. Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital"
+
+    },
+
+    "ING Verzekeren": {
             "Status": "Accepted with conditions",
-            "OPD_status": "Not Accepted",
-            "OPD_note": "Pay & Claim",
+            "OPD_status": "Accepted with conditions",
+            "OPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued",
             "IPD_status": "Accepted", 
             "IPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued before discharge. If you do not wish to wait, please make a deposit or pay and claim reimbursement",
             "Country": "Netherlands",
-            "Last_updated": "11 May 2026",
+            "Last_updated": "10 Nov 2026",
             "Contact": "-",
-            "Client": "IZA Verzekeren",
-            "Assistance company": "APRIL Assistance Thailand",
+            "Client": "-",
+            "Assistance company": "SOS International Netherlands",
             "Company Type": "Assistance company",
-            "Additional information": "The hospital can accept cases directly from ANWB Verzekeren. Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital"
+            "Additional information": "The hospital cannot accept cases directly from ING Verzekeren. Please coordinate with your insurance provider before coming to the hospital"
 
-        },
+    },
 
-    
-    
+    "TAA (Tyrol Air Ambulance)": {
+            "Status": "Accepted with conditions",
+            "OPD_status": "Accepted with conditions",
+            "OPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued",
+            "IPD_status": "Accepted", 
+            "IPD_note": "Initial Guarantee of Payment (GOP) is required, and a final GOP must be issued before discharge. If you do not wish to wait, please make a deposit or pay and claim reimbursement",
+            "Country": "Austria",
+            "Last_updated": "11 Nov 2026",
+            "Contact": "taa@taa.at",
+            "Client": "-",
+            "Assistance company": "APRIL Assistance Thailand",
+            "Company Type": "Air Ambulance service company ",
+            "Additional information": "The hospital can accept cases directly from TAA (Tyrol Air Ambulance). Alternatively, cases may sometimes be assigned through a local assistance provider in Thailand. Please coordinate with your insurance provider before coming to the hospital"
 
+    },
 
-
- }
+}
 
 
 
